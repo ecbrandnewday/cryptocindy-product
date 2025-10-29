@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CryptoCindy周邊商店</title>
+  <title> CryptoCindy周邊商店</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -135,6 +135,45 @@
     <small>Copyright © 2025 CryptoCindy</small>
   </footer>
 
-  <script src="app.js"></script>
+  <script src="app.js" defer></script>
+
+  <div id="orderConfirmModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="orderConfirmTitle" hidden>
+    <div class="modal__backdrop" data-action="close"></div>
+    <div class="modal__panel" role="document" tabindex="-1">
+      <header class="modal__header">
+        <h2 id="orderConfirmTitle">退換貨規則</h2>
+      </header>
+      <div class="modal__body">
+        <ol class="modal__list">
+          <li>
+            <h3>退貨條件</h3>
+            <ul>
+              <li>除非商品本身存在瑕疵或在運送過程中發生損毀，否則恕不接受退貨。</li>
+              <li>若您收到的商品有問題，請於收貨後 48 小時內與我們聯繫，並提供相關照片，我們將協助處理。</li>
+            </ul>
+          </li>
+          <li>
+            <h3>未取件退回</h3>
+            <ul>
+              <li>如顧客未於取件期限內至超商領取包裹，導致包裹退回，重新寄送需由顧客支付運費。</li>
+              <li>運費標準：每次 2 USDT。</li>
+            </ul>
+          </li>
+          <li>
+            <h3>收件資訊錯誤</h3>
+            <ul>
+              <li>請在下單前再次確認您的姓名、電話、超商店名等收件資訊正確。</li>
+              <li>若因資訊填寫錯誤導致商品無法送達或被退回，重新寄送需由顧客支付運費。</li>
+              <li>運費標準：每次 2 USDT。</li>
+            </ul>
+          </li>
+        </ol>
+      </div>
+      <footer class="modal__footer">
+        <button type="button" class="modal__btn modal__btn--secondary" data-action="cancel">返回確認</button>
+        <button type="button" class="modal__btn modal__btn--primary" data-action="confirm">確認送出</button>
+      </footer>
+    </div>
+  </div>
 </body>
 </html>

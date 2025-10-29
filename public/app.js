@@ -5,6 +5,8 @@
     plush: { id: 'plush', name: '比特兔娃娃', price: 25 },
     keychain: { id: 'keychain', name: '比特兔鑰匙圈', price: 10 },
   };
+  const BINANCE_UID = '12345654';
+  const BSC_WALLET_ADDRESS = '0xacb7d515bfe4812805dad5f28ba742a38a36c015';
 
   const form = document.getElementById('orderForm');
   const productCards = Array.from(document.querySelectorAll('.product__card'));
@@ -19,11 +21,19 @@
   const walletInput = walletField.querySelector('input');
   const galleries = Array.from(document.querySelectorAll('.product__gallery'));
   const yearSpan = document.getElementById('year');
+  const confirmModal = document.getElementById('orderConfirmModal');
+  const modalPanel = confirmModal?.querySelector('.modal__panel');
+  const modalBody = confirmModal?.querySelector('.modal__body');
+  const modalBackdrop = confirmModal?.querySelector('.modal__backdrop');
+  const modalCancelBtn = confirmModal?.querySelector('[data-action="cancel"]');
+  const modalConfirmBtn = confirmModal?.querySelector('[data-action="confirm"]');
 
   const state = {
     orders: [],
     cart: {},
   };
+
+  let pendingOrderData = null;
 
   function formatPhone(phone) {
     const digits = phone.replace(/\D/g, '').slice(0, 10);
@@ -107,6 +117,121 @@
       });
   }
 
+  async function copyTextToClipboard(text) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    let succeeded = false;
+    try {
+      succeeded = document.execCommand('copy');
+    } catch (error) {
+      console.warn('無法透過 execCommand 複製文字：', error);
+    }
+
+    document.body.removeChild(textarea);
+    if (!succeeded) {
+      throw new Error('copy-failed');
+    }
+    return true;
+  }
+
+  function createCopyButton(text, ariaLabel = '複製資訊') {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'payment-hint__copy-btn';
+    button.setAttribute('aria-label', ariaLabel);
+    const idleText = '複製';
+    const successText = '已複製';
+    const failureText = '複製失敗';
+    button.textContent = idleText;
+
+    let resetTimer;
+    button.addEventListener('click', async () => {
+      clearTimeout(resetTimer);
+      try {
+        await copyTextToClipboard(text);
+        button.textContent = successText;
+      } catch (error) {
+        button.textContent = failureText;
+        console.warn('複製資訊時發生錯誤：', error);
+      }
+      resetTimer = window.setTimeout(() => {
+        button.textContent = idleText;
+      }, 2000);
+    });
+
+    return button;
+  }
+
+  function handleModalKeydown(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeConfirmModal();
+    }
+  }
+
+  function openConfirmModal() {
+    if (!confirmModal) {
+      finalizeOrderSubmission();
+      return;
+    }
+
+    confirmModal.hidden = false;
+    modalBody?.scrollTo({ top: 0 });
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleModalKeydown);
+    window.setTimeout(() => {
+      modalPanel?.focus();
+    }, 0);
+  }
+
+  function closeConfirmModal(resetPending = true) {
+    if (!confirmModal) {
+      if (resetPending) {
+        pendingOrderData = null;
+      }
+      return;
+    }
+
+    if (confirmModal.hidden) {
+      if (resetPending) {
+        pendingOrderData = null;
+      }
+      return;
+    }
+
+    confirmModal.hidden = true;
+    document.body.style.overflow = '';
+    document.removeEventListener('keydown', handleModalKeydown);
+    if (resetPending) {
+      pendingOrderData = null;
+    }
+  }
+
+  function finalizeOrderSubmission() {
+    if (!pendingOrderData) {
+      closeConfirmModal();
+      return;
+    }
+
+    const order = createOrder(pendingOrderData);
+    state.orders.unshift(order);
+    saveOrders();
+    closeConfirmModal();
+    resetForm();
+    alert('訂單已送出！感謝你的支持，我們會盡快處理。');
+  }
+
   function togglePaymentFields() {
     const method = paymentSelect.value;
     if (method === '幣安交易所') {
@@ -135,10 +260,38 @@
       return;
     }
     const formatted = formatAmount(total);
+    paymentHint.textContent = '';
+
     if (paymentSelect.value === '幣安交易所') {
-      paymentHint.innerHTML = `<strong class="payment-hint__emphasis">請打款 ${formatted} USDT 到 幣安 UID：12345654</strong>`;
+      const emphasis = document.createElement('strong');
+      emphasis.className = 'payment-hint__emphasis';
+
+      const prefix = document.createTextNode(`請打款 ${formatted} USDT 到 幣安 UID： `);
+      const wrapper = document.createElement('span');
+      wrapper.className = 'payment-hint__address';
+
+      const code = document.createElement('code');
+      code.className = 'hint-code';
+      code.textContent = BINANCE_UID;
+
+      const copyBtn = createCopyButton(BINANCE_UID, '複製幣安 UID');
+
+      wrapper.append(code, copyBtn);
+      emphasis.append(prefix, wrapper);
+      paymentHint.appendChild(emphasis);
     } else if (paymentSelect.value === 'BSC 鏈') {
-      paymentHint.innerHTML = `請打款 ${formatted} USDT 到 BSC 鏈地址：<code class="hint-code">0xacb7d515bfe4812805dad5f28ba742a38a36c015</code>`;
+      const prefix = document.createTextNode(`請打款 ${formatted} USDT 到 BSC 鏈地址： `);
+      const wrapper = document.createElement('span');
+      wrapper.className = 'payment-hint__address';
+
+      const code = document.createElement('code');
+      code.className = 'hint-code';
+      code.textContent = BSC_WALLET_ADDRESS;
+
+      const copyBtn = createCopyButton(BSC_WALLET_ADDRESS, '複製 BSC 鏈地址');
+
+      wrapper.append(code, copyBtn);
+      paymentHint.append(prefix, wrapper);
     } else {
       paymentHint.textContent = '';
     }
@@ -322,7 +475,9 @@
     togglePaymentFields();
     resetCart();
     recalc();
-    yearSpan.textContent = new Date().getFullYear();
+    if (yearSpan) {
+      yearSpan.textContent = new Date().getFullYear();
+    }
   }
 
   form.addEventListener('submit', (event) => {
@@ -335,16 +490,25 @@
       return;
     }
 
-    const order = createOrder(data);
-    state.orders.unshift(order);
-    saveOrders();
-    resetForm();
-    alert('訂單已送出！感謝你的支持，我們會盡快處理。');
+    pendingOrderData = data;
+    openConfirmModal();
   });
 
   paymentSelect.addEventListener('change', () => {
     togglePaymentFields();
     recalc();
+  });
+
+  modalCancelBtn?.addEventListener('click', () => {
+    closeConfirmModal();
+  });
+
+  modalConfirmBtn?.addEventListener('click', () => {
+    finalizeOrderSubmission();
+  });
+
+  modalBackdrop?.addEventListener('click', () => {
+    closeConfirmModal();
   });
 
   handleProductControls();
