@@ -407,6 +407,7 @@
       totalPrice: summary.total,
       totalQuantity: summary.totalQty,
       customerName: formData.get('customerName')?.trim() || '',
+      email: formData.get('email')?.trim() || '',
       phone: formData.get('phone')?.trim() || '',
       store: formData.get('store')?.trim() || '',
       paymentMethod: formData.get('paymentMethod') || '',
@@ -426,6 +427,11 @@
     }
     if (!data.customerName) {
       errors.push('請輸入姓名');
+    }
+    if (!data.email) {
+      errors.push('請輸入電子信箱');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+      errors.push('請輸入正確的電子信箱');
     }
     if (!/^09\d{2}-?\d{3}-?\d{3}$/.test(data.phone)) {
       errors.push('請輸入正確手機號碼（09xx-xxx-xxx）');
