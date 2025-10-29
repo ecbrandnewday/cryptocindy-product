@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>兔兔幣抱枕周邊商店</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <main>
+    <section id="product-showcase" class="product" aria-label="商品資訊">
+      <div class="product__grid">
+        <article class="product__card" data-product-id="plush">
+          <div class="product__gallery" data-gallery="plush">
+            <img src="doll.png" alt="抱著比特幣的比特兔娃娃" class="is-active">
+            <img src="doll2.png" alt="比特兔娃娃近拍特寫">
+            <div class="product__gallery-nav" role="tablist" aria-label="比特兔娃娃圖片瀏覽">
+              <button type="button" class="product__gallery-dot is-active" data-image-index="0" aria-label="查看比特兔娃娃圖片 1" aria-pressed="true"></button>
+              <button type="button" class="product__gallery-dot" data-image-index="1" aria-label="查看比特兔娃娃圖片 2" aria-pressed="false"></button>
+            </div>
+          </div>
+          <div class="product__details">
+            <h2>比特兔娃娃</h2>
+            <p class="product__price">25 USDT</p>
+            <div class="product__actions" role="group" aria-label="設定比特兔娃娃購買數量">
+              <button type="button" class="product__qty-btn" data-action="decrease" aria-label="減少比特兔娃娃數量">−</button>
+              <span class="product__qty" data-role="quantity" aria-live="polite">0</span>
+              <button type="button" class="product__qty-btn" data-action="increase" aria-label="增加比特兔娃娃數量">＋</button>
+            </div>
+          </div>
+        </article>
+        <article class="product__card" data-product-id="keychain">
+          <div class="product__gallery" data-gallery="keychain">
+            <img src="keychain2.png" alt="比特兔鑰匙圈手持展示" class="is-active">
+            <img src="keychain1.png" alt="比特兔鑰匙圈">
+            <div class="product__gallery-nav" role="tablist" aria-label="比特兔鑰匙圈圖片瀏覽">
+              <button type="button" class="product__gallery-dot is-active" data-image-index="0" aria-label="查看比特兔鑰匙圈圖片 1" aria-pressed="true"></button>
+              <button type="button" class="product__gallery-dot" data-image-index="1" aria-label="查看比特兔鑰匙圈圖片 2" aria-pressed="false"></button>
+            </div>
+          </div>
+          <div class="product__details">
+            <h2>比特兔鑰匙圈</h2>
+            <p class="product__price">10 USDT</p>
+            <div class="product__actions" role="group" aria-label="設定比特兔鑰匙圈購買數量">
+              <button type="button" class="product__qty-btn" data-action="decrease" aria-label="減少比特兔鑰匙圈數量">−</button>
+              <span class="product__qty" data-role="quantity" aria-live="polite">0</span>
+              <button type="button" class="product__qty-btn" data-action="increase" aria-label="增加比特兔鑰匙圈數量">＋</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="order" aria-label="訂單表單">
+      <h2 id="order-form">填寫訂單資訊</h2>
+      <form id="orderForm" novalidate>
+        <div class="order__summary" aria-live="polite">
+          <h3>已選商品</h3>
+          <p class="order__summary-empty" id="summaryEmpty">尚未選擇商品，請於上方商品卡按下「＋」開始選購。（每款商品最多 2 件）</p>
+          <ul class="order__summary-list" id="summaryList"></ul>
+          <div class="order__total">
+            <span>總價</span>
+            <strong id="orderTotal">0</strong>
+            <span class="order__total-unit">USDT</span>
+          </div>
+        </div>
+
+        <fieldset class="order__section">
+          <legend>收件資料</legend>
+          <label class="field">
+            <span>姓名</span>
+            <input type="text" name="customerName" placeholder="王小兔" autocomplete="name" required>
+          </label>
+          <label class="field">
+            <span>手機</span>
+            <input type="tel" name="phone" placeholder="09xx-xxx-xxx" autocomplete="tel" pattern="09\d{2}-?\d{3}-?\d{3}" required>
+          </label>
+          <label class="field">
+            <span>7-11 取貨門市名稱</span>
+            <input type="text" name="store" placeholder="台北市信義門市" required>
+          </label>
+          <label class="field">
+            <span>付款方式</span>
+            <select name="paymentMethod" required>
+              <option value="幣安交易所">幣安交易所</option>
+              <option value="BSC 鏈">BSC 鏈</option>
+            </select>
+          </label>
+          <label class="field payment-extra" id="binanceUidField">
+            <span>您的幣安 UID</span>
+            <input type="text" name="binanceUid" placeholder="請輸入 8 至 12 位數字">
+          </label>
+          <label class="field payment-extra" id="walletField">
+            <span>您的錢包地址</span>
+            <input type="text" name="walletAddress" placeholder="0x...">
+          </label>
+          <p class="payment-hint" id="paymentHint" aria-live="polite"></p>
+        </fieldset>
+
+        <div class="order__actions">
+          <button type="submit" class="btn-primary">送出訂單</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <footer id="footer" class="footer">
+    <div class="footer__logo">
+      <img src="cindy logo final.png" alt="CryptoCindy 兔兔 Logo">
+    </div>
+    <div class="footer__contact" aria-label="聯絡我">
+      <h3>聯絡我</h3>
+      <nav class="footer__contact-links">
+        <a href="https://x.com/BTCindy_eth" target="_blank" rel="noopener" aria-label="前往 X 與 CryptoCindy 聯絡">
+          <span class="footer__icon footer__icon--x" aria-hidden="true">X</span>
+        </a>
+        <a href="https://t.me/ecbrandnewday" target="_blank" rel="noopener" aria-label="前往 Telegram 與 CryptoCindy 聯絡">
+          <span class="footer__icon footer__icon--telegram" aria-hidden="true">
+            <svg viewBox="0 0 240 240" aria-hidden="true" focusable="false">
+              <circle cx="120" cy="120" r="120" fill="#27a6e5" />
+              <path fill="#fff" d="M174.8 74.2c2.2-9.4-7.8-6.7-12.9-4.9L55.9 116.7c-8.6 3.3-8.4 8-1.4 10.2l30.3 9.5 11.6 37.5c1.4 3.8 0.7 5.3 4.9 5.3 3.3 0 4.7-1.5 6.5-3.3l16.4-16.1 34.1 25c6.3 3.5 10.9 1.7 12.5-5.8L174.8 74.2z" />
+            </svg>
+          </span>
+        </a>
+        <a href="mailto:cryptocindyrabbit@gmail.com" aria-label="寄信給 CryptoCindy">
+          <span class="footer__icon footer__icon--mail" aria-hidden="true">
+            <img src="Gmail-logo.png" alt="">
+          </span>
+        </a>
+      </nav>
+    </div>
+    <small>Copyright © 2025 CryptoCindy</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
