@@ -7,6 +7,7 @@
   };
   const BINANCE_UID = '12345654';
   const BSC_WALLET_ADDRESS = '0xacb7d515bfe4812805dad5f28ba742a38a36c015';
+  const WEBHOOK_URL = 'https://cryptocindy.app.n8n.cloud/webhook/order-created';
 
   const form = document.getElementById('orderForm');
   const productCards = Array.from(document.querySelectorAll('.product__card'));
@@ -218,18 +219,29 @@
     }
   }
 
-  function finalizeOrderSubmission() {
+  async function finalizeOrderSubmission() {
     if (!pendingOrderData) {
       closeConfirmModal();
       return;
     }
 
     const order = createOrder(pendingOrderData);
+    let webhookError = null;
+    try {
+      await sendOrderWebhook(order);
+    } catch (error) {
+      webhookError = error;
+    }
+
     state.orders.unshift(order);
     saveOrders();
     closeConfirmModal();
     resetForm();
-    alert('訂單已送出！感謝你的支持，我們會盡快處理。');
+    if (webhookError) {
+      alert('訂單已存檔，但通知後端工作流時發生問題，請稍後再試或聯絡我們。');
+    } else {
+      alert('訂單已送出！感謝你的支持，我們會盡快處理。');
+    }
   }
 
   function togglePaymentFields() {
@@ -468,6 +480,55 @@
       createdAt: now.toLocaleString('zh-TW', { hour12: false }),
       id: `${now.getTime()}-${Math.random().toString(16).slice(2)}`,
     };
+  }
+
+  function buildWebhookPayload(order) {
+    const {
+      id,
+      createdAt,
+      customerName,
+      email,
+      phone,
+      store,
+      paymentMethod,
+      binanceUid,
+      walletAddress,
+      totalQuantity,
+      totalPrice,
+      plushQty,
+      keychainQty,
+    } = order;
+    return {
+      id,
+      createdAt,
+      customerName,
+      email,
+      phone,
+      store,
+      paymentMethod,
+      binanceUid,
+      walletAddress,
+      totalQuantity,
+      totalPrice,
+      plushQty,
+      keychainQty,
+    };
+  }
+
+  async function sendOrderWebhook(order) {
+    try {
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildWebhookPayload(order)),
+      });
+      if (!response.ok) {
+        throw new Error(`Webhook responded with status ${response.status}`);
+      }
+    } catch (error) {
+      console.warn('Webhook 傳送失敗：', error);
+      throw error;
+    }
   }
 
   function resetCart() {
