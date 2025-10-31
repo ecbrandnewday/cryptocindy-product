@@ -70,6 +70,221 @@
     });
   }
 
+  function getActiveGalleryIndex(galleryEl) {
+    const dots = Array.from(galleryEl.querySelectorAll('.product__gallery-dot'));
+    const activeDotIndex = dots.findIndex((dot) => dot.classList.contains('is-active'));
+    if (activeDotIndex >= 0) {
+      return activeDotIndex;
+    }
+    const images = Array.from(galleryEl.querySelectorAll('img'));
+    const activeImageIndex = images.findIndex((img) => img.classList.contains('is-active'));
+    return activeImageIndex >= 0 ? activeImageIndex : 0;
+  }
+
+  function moveGalleryBy(galleryEl, step) {
+    const images = galleryEl.querySelectorAll('img');
+    const total = images.length;
+    if (!total) {
+      return;
+    }
+    const nextIndex = (getActiveGalleryIndex(galleryEl) + step + total) % total;
+    showGalleryImage(galleryEl, nextIndex);
+  }
+
+  function setupGallerySwipe(galleryEl) {
+    const SWIPE_THRESHOLD = 35;
+    const SWIPE_LOCK_THRESHOLD = 10;
+    const state = {
+      pointerId: null,
+      startX: 0,
+      startY: 0,
+      isTouch: false,
+      lockedAxis: false,
+    };
+
+    const resetState = () => {
+      state.pointerId = null;
+      state.startX = 0;
+      state.startY = 0;
+      state.isTouch = false;
+      state.lockedAxis = false;
+      galleryEl.classList.remove('is-dragging');
+    };
+
+    const onStart = (clientX, clientY, pointerId = null, isTouch = false) => {
+      if (state.pointerId !== null) {
+        return;
+      }
+      state.pointerId = pointerId;
+      state.startX = clientX;
+      state.startY = clientY;
+      state.isTouch = isTouch;
+      state.lockedAxis = false;
+      galleryEl.classList.add('is-dragging');
+    };
+
+    const onMove = (clientX, clientY, event) => {
+      if (state.pointerId === null) {
+        return;
+      }
+      const deltaX = clientX - state.startX;
+      const deltaY = clientY - state.startY;
+
+      if (!state.lockedAxis) {
+        if (Math.abs(deltaX) > SWIPE_LOCK_THRESHOLD && Math.abs(deltaX) > Math.abs(deltaY)) {
+          state.lockedAxis = true;
+        } else if (Math.abs(deltaY) > SWIPE_LOCK_THRESHOLD) {
+          resetState();
+          return;
+        }
+      }
+
+      if (state.lockedAxis && state.isTouch && event?.cancelable) {
+        event.preventDefault();
+      }
+    };
+
+    const onEnd = (clientX) => {
+      if (state.pointerId === null) {
+        return;
+      }
+      const deltaX = clientX - state.startX;
+      const shouldMove = Math.abs(deltaX) >= SWIPE_THRESHOLD;
+      resetState();
+      if (shouldMove) {
+        moveGalleryBy(galleryEl, deltaX < 0 ? 1 : -1);
+      }
+    };
+
+    const onCancel = () => {
+      if (state.pointerId === null) {
+        return;
+      }
+      resetState();
+    };
+
+    if (window.PointerEvent) {
+      galleryEl.addEventListener(
+        'pointerdown',
+        (event) => {
+          if (event.pointerType === 'mouse' && event.button !== 0) {
+            return;
+          }
+          if (event.target.closest('.product__gallery-dot')) {
+            return;
+          }
+          onStart(event.clientX, event.clientY, event.pointerId, event.pointerType === 'touch');
+          try {
+            galleryEl.setPointerCapture(event.pointerId);
+          } catch (error) {
+            // ignore capture errors
+          }
+        },
+        { passive: true },
+      );
+
+      galleryEl.addEventListener(
+        'pointermove',
+        (event) => {
+          if (state.pointerId !== event.pointerId) {
+            return;
+          }
+          onMove(event.clientX, event.clientY, event);
+        },
+        { passive: false },
+      );
+
+      galleryEl.addEventListener('pointerup', (event) => {
+        if (state.pointerId !== event.pointerId) {
+          return;
+        }
+        try {
+          galleryEl.releasePointerCapture(event.pointerId);
+        } catch (error) {
+          // ignore release errors
+        }
+        onEnd(event.clientX);
+      });
+
+      galleryEl.addEventListener('pointercancel', (event) => {
+        if (state.pointerId !== event.pointerId) {
+          return;
+        }
+        onCancel();
+      });
+    } else {
+      galleryEl.addEventListener(
+        'touchstart',
+        (event) => {
+          if (event.touches.length !== 1) {
+            return;
+          }
+          if (event.target.closest('.product__gallery-dot')) {
+            return;
+          }
+          const touch = event.touches[0];
+          onStart(touch.clientX, touch.clientY, touch.identifier, true);
+        },
+        { passive: true },
+      );
+
+      galleryEl.addEventListener(
+        'touchmove',
+        (event) => {
+          if (state.pointerId === null) {
+            return;
+          }
+          const touch = Array.from(event.changedTouches).find((t) => t.identifier === state.pointerId);
+          if (!touch) {
+            return;
+          }
+          onMove(touch.clientX, touch.clientY, event);
+        },
+        { passive: false },
+      );
+
+      galleryEl.addEventListener('touchend', (event) => {
+        if (state.pointerId === null) {
+          return;
+        }
+        const touch = Array.from(event.changedTouches).find((t) => t.identifier === state.pointerId);
+        if (!touch) {
+          return;
+        }
+        onEnd(touch.clientX);
+      });
+
+      galleryEl.addEventListener('touchcancel', () => {
+        onCancel();
+      });
+
+      const handleMouseMove = (event) => {
+        if (state.pointerId !== 'mouse') {
+          return;
+        }
+        onMove(event.clientX, event.clientY, event);
+      };
+
+      const handleMouseUp = (event) => {
+        if (state.pointerId !== 'mouse') {
+          return;
+        }
+        onEnd(event.clientX);
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      galleryEl.addEventListener('mousedown', (event) => {
+        if (event.button !== 0 || event.target.closest('.product__gallery-dot')) {
+          return;
+        }
+        onStart(event.clientX, event.clientY, 'mouse', false);
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+      });
+    }
+  }
+
   function setupGalleries() {
     galleries.forEach((galleryEl) => {
       const dots = galleryEl.querySelectorAll('.product__gallery-dot');
@@ -79,6 +294,7 @@
           showGalleryImage(galleryEl, index);
         });
       });
+      setupGallerySwipe(galleryEl);
     });
   }
 
