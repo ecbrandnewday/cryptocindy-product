@@ -401,6 +401,10 @@
   function collectFormData() {
     const summary = recalc();
     const formData = new FormData(form);
+    const itemQuantityMap = summary.items.reduce((acc, item) => {
+      acc[item.id] = item.quantity;
+      return acc;
+    }, {});
 
     return {
       items: summary.items,
@@ -413,6 +417,8 @@
       paymentMethod: formData.get('paymentMethod') || '',
       binanceUid: formData.get('binanceUid')?.trim() || '',
       walletAddress: formData.get('walletAddress')?.trim() || '',
+      plushQty: itemQuantityMap.plush || 0,
+      keychainQty: itemQuantityMap.keychain || 0,
     };
   }
 
