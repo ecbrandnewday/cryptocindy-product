@@ -8,6 +8,11 @@
   const BINANCE_UID = '12345654';
   const BSC_WALLET_ADDRESS = '0xacb7d515bfe4812805dad5f28ba742a38a36c015';
   const WEBHOOK_URL = 'https://cryptocindy.app.n8n.cloud/webhook/order-created';
+  const INVENTORY_URL = 'https://docs.google.com/spreadsheets/d/1-UShfw3ta6F1ANFK6IG1-PEGrKyyGda6H-kQ4CVxgSo/gviz/tq?tqx=out:json&gid=0';
+  const SALE_LIMITS = {
+    plush: 80,
+    keychain: 150,
+  };
 
   const form = document.getElementById('orderForm');
   const productCards = Array.from(document.querySelectorAll('.product__card'));
@@ -32,6 +37,10 @@
   const state = {
     orders: [],
     cart: {},
+    soldOut: {
+      plush: false,
+      keychain: false,
+    },
   };
 
   let pendingOrderData = null;
@@ -71,6 +80,95 @@
         });
       });
     });
+  }
+
+  function parseGvizResponse(text) {
+    const match = text.match(/google\.visualization\.Query\.setResponse\((.*)\);?$/s);
+    if (!match) {
+      throw new Error('Invalid Google Sheets response');
+    }
+    return JSON.parse(match[1]);
+  }
+
+  async function fetchInventoryTotals() {
+    const response = await fetch(INVENTORY_URL);
+    if (!response.ok) {
+      throw new Error(`Inventory endpoint responded with status ${response.status}`);
+    }
+    const text = await response.text();
+    const payload = parseGvizResponse(text);
+    const rows = payload?.table?.rows ?? [];
+
+    let plushTotal = 0;
+    let keychainTotal = 0;
+    rows.forEach((row) => {
+      const cells = row?.c || [];
+      const plushValue = Number(cells[11]?.v) || 0;
+      const keychainValue = Number(cells[12]?.v) || 0;
+      plushTotal += plushValue;
+      keychainTotal += keychainValue;
+    });
+
+    return { plushTotal, keychainTotal };
+  }
+
+  function ensureSoldOutNotice(card) {
+    let notice = card.querySelector('.product__soldout');
+    if (!notice) {
+      notice = document.createElement('p');
+      notice.className = 'product__soldout';
+      notice.setAttribute('aria-live', 'polite');
+      notice.hidden = true;
+      card.querySelector('.product__details')?.appendChild(notice);
+    }
+    return notice;
+  }
+
+  function applySoldOutState() {
+    let cartChanged = false;
+    productCards.forEach((card) => {
+      const productId = card.dataset.productId;
+      const isSoldOut = Boolean(state.soldOut[productId]);
+      const actions = card.querySelector('.product__actions');
+      const notice = ensureSoldOutNotice(card);
+
+      if (isSoldOut && state.cart[productId]) {
+        delete state.cart[productId];
+        cartChanged = true;
+      }
+
+      notice.hidden = !isSoldOut;
+      if (isSoldOut) {
+        notice.textContent = '已售完';
+        actions?.setAttribute('aria-hidden', 'true');
+      } else {
+        notice.textContent = '';
+        actions?.removeAttribute('aria-hidden');
+      }
+
+      card.classList.toggle('is-sold-out', isSoldOut);
+    });
+    return cartChanged;
+  }
+
+  async function loadSaleStatus() {
+    try {
+      const totals = await fetchInventoryTotals();
+      state.soldOut.plush = totals.plushTotal >= SALE_LIMITS.plush;
+      state.soldOut.keychain = totals.keychainTotal >= SALE_LIMITS.keychain;
+      const cartChanged = applySoldOutState();
+      if (cartChanged) {
+        recalc();
+      } else {
+        updateProductControls();
+      }
+    } catch (error) {
+      console.warn('無法載入商品銷售狀態：', error);
+    }
+  }
+
+  function isProductSoldOut(productId) {
+    return Boolean(state.soldOut[productId]);
   }
 
   function loadOrders() {
@@ -225,6 +323,13 @@
       return;
     }
 
+    const validationErrors = validate(pendingOrderData);
+    if (validationErrors.length) {
+      alert(validationErrors.join('\n'));
+      closeConfirmModal();
+      return;
+    }
+
     const order = createOrder(pendingOrderData);
     let webhookError = null;
     try {
@@ -237,6 +342,7 @@
     saveOrders();
     closeConfirmModal();
     resetForm();
+    await loadSaleStatus();
     if (webhookError) {
       alert('訂單已存檔，但通知後端工作流時發生問題，請稍後再試或聯絡我們。');
     } else {
@@ -309,22 +415,27 @@
     }
   }
 
-  function updateProductControls(totalQty) {
+  function updateProductControls() {
     productCards.forEach((card) => {
       const productId = card.dataset.productId;
       const quantity = state.cart[productId] || 0;
+      const soldOut = isProductSoldOut(productId);
       const qtyEl = card.querySelector('[data-role="quantity"]');
       const decreaseBtn = card.querySelector('[data-action="decrease"]');
       const increaseBtn = card.querySelector('[data-action="increase"]');
 
       if (qtyEl) {
-        qtyEl.textContent = quantity;
+        qtyEl.textContent = soldOut ? '已售完' : quantity;
       }
       if (decreaseBtn) {
-        decreaseBtn.disabled = quantity <= 0;
+        const disabled = soldOut || quantity <= 0;
+        decreaseBtn.disabled = disabled;
+        decreaseBtn.setAttribute('aria-disabled', String(disabled));
       }
       if (increaseBtn) {
-        increaseBtn.disabled = quantity >= MAX_PER_ITEM;
+        const disabled = soldOut || quantity >= MAX_PER_ITEM;
+        increaseBtn.disabled = disabled;
+        increaseBtn.setAttribute('aria-disabled', String(disabled));
       }
     });
   }
@@ -362,7 +473,7 @@
     const totalQty = items.reduce((sum, item) => sum + item.quantity, 0);
     const total = items.reduce((sum, item) => sum + item.subtotal, 0);
 
-    updateProductControls(totalQty);
+    updateProductControls();
     renderSummary(items, total);
 
     return { items, totalQty, total };
@@ -370,6 +481,11 @@
 
   function changeQuantity(productId, delta) {
     if (!PRODUCTS[productId]) {
+      return;
+    }
+    if (isProductSoldOut(productId) && delta > 0) {
+      const productName = PRODUCTS[productId]?.name ?? '該商品';
+      alert(`${productName}已售完，暫時無法下單。`);
       return;
     }
     const current = state.cart[productId] || 0;
@@ -469,6 +585,12 @@
     if (!data.paymentMethod) {
       errors.push('請選擇付款方式');
     }
+    if (state.soldOut.plush && data.plushQty > 0) {
+      errors.push('比特兔娃娃已售完，請移除該商品後再下單');
+    }
+    if (state.soldOut.keychain && data.keychainQty > 0) {
+      errors.push('比特兔鑰匙圈已售完，請移除該商品後再下單');
+    }
     return errors;
   }
 
@@ -543,7 +665,7 @@
     recalc();
   }
 
-  function init() {
+  async function init() {
     loadOrders();
     togglePaymentFields();
     resetCart();
@@ -551,6 +673,7 @@
     if (yearSpan) {
       yearSpan.textContent = new Date().getFullYear();
     }
+    await loadSaleStatus();
   }
 
   form.addEventListener('submit', (event) => {
