@@ -574,7 +574,7 @@
       binanceUidInput.required = true;
       walletInput.required = false;
       walletInput.value = '';
-    } else if (method === 'BSC 鏈') {
+    } else if (method === 'BSC') {
       walletField.style.display = 'flex';
       binanceUidField.style.display = 'none';
       walletInput.required = true;
@@ -613,8 +613,11 @@
       wrapper.append(code, copyBtn);
       emphasis.append(prefix, wrapper);
       paymentHint.appendChild(emphasis);
-    } else if (paymentSelect.value === 'BSC 鏈') {
-      const prefix = document.createTextNode(`請打款 ${formatted} USDT 到 BSC 鏈地址： `);
+    } else if (paymentSelect.value === 'BSC') {
+      const emphasis = document.createElement('strong');
+      emphasis.className = 'payment-hint__emphasis';
+
+      const prefix = document.createTextNode(`請打款 ${formatted} USDT 到 BSC 地址： `);
       const wrapper = document.createElement('span');
       wrapper.className = 'payment-hint__address';
 
@@ -622,10 +625,11 @@
       code.className = 'hint-code';
       code.textContent = BSC_WALLET_ADDRESS;
 
-      const copyBtn = createCopyButton(BSC_WALLET_ADDRESS, '複製 BSC 鏈地址');
+      const copyBtn = createCopyButton(BSC_WALLET_ADDRESS, '複製 BSC 地址');
 
       wrapper.append(code, copyBtn);
-      paymentHint.append(prefix, wrapper);
+      emphasis.append(prefix, wrapper);
+      paymentHint.appendChild(emphasis);
     } else {
       paymentHint.textContent = '';
     }
@@ -793,9 +797,9 @@
       if (!/^\d{8,12}$/.test(data.binanceUid)) {
         errors.push('請輸入正確的幣安 UID（8-12 位數字）');
       }
-    } else if (data.paymentMethod === 'BSC 鏈') {
+    } else if (data.paymentMethod === 'BSC') {
       if (!/^0x[a-fA-F0-9]{40}$/.test(data.walletAddress)) {
-        errors.push('請輸入正確的 BSC 鏈地址（0x 開頭共 42 字元）');
+        errors.push('請輸入正確的 BSC 地址（0x 開頭共 42 字元）');
       }
     }
     if (!data.paymentMethod) {
