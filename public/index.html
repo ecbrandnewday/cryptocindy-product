@@ -71,15 +71,15 @@
         <fieldset class="order__section">
           <legend>收件人資料</legend>
           <label class="field">
-            <span>姓名</span>
+            <span>姓名（請確保可用於超商取件）</span>
             <input type="text" name="customerName" placeholder="王小兔" autocomplete="name" required>
           </label>
           <label class="field">
-            <span>電子信箱</span>
+            <span>電子信箱（送出訂單後會收到確認信）</span>
             <input type="email" name="email" placeholder="rabbit@example.com" autocomplete="email" required>
           </label>
           <label class="field">
-            <span>手機</span>
+            <span>手機（到貨會寄簡訊通知）</span>
             <input type="tel" name="phone" placeholder="09xx-xxx-xxx" autocomplete="tel" pattern="09\d{2}-?\d{3}-?\d{3}" required>
           </label>
           <label class="field">
@@ -93,15 +93,17 @@
               <option value="BSC 鏈">BSC 鏈</option>
             </select>
           </label>
+          <div class="field payment-hint-field">
+            <p class="payment-hint" id="paymentHint" aria-live="polite"></p>
+          </div>
           <label class="field payment-extra" id="binanceUidField">
-            <span>您的幣安 UID</span>
+            <span>付款完成後請輸入您的幣安 UID</span>
             <input type="text" name="binanceUid" placeholder="請輸入 8 至 12 位數字">
           </label>
           <label class="field payment-extra" id="walletField">
-            <span>您的錢包地址</span>
+            <span>付款完成後請輸入您的錢包地址</span>
             <input type="text" name="walletAddress" placeholder="0x...">
           </label>
-          <p class="payment-hint" id="paymentHint" aria-live="polite"></p>
         </fieldset>
 
         <div class="order__actions">
@@ -113,7 +115,9 @@
 
   <footer id="footer" class="footer">
     <div class="footer__logo">
-      <img src="cindy logo final.png" alt="CryptoCindy 兔兔 Logo">
+      <a href="https://cryptocindy.com/" target="_blank" rel="noopener">
+        <img src="cindy logo final.png" alt="CryptoCindy 兔兔 Logo">
+      </a>
     </div>
     <div class="footer__contact" aria-label="聯絡我">
       <h3>聯絡我</h3>

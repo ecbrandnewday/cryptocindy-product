@@ -5,7 +5,7 @@
     plush: { id: 'plush', name: '比特兔娃娃', price: 25 },
     keychain: { id: 'keychain', name: '比特兔鑰匙圈', price: 10 },
   };
-  const BINANCE_UID = '12345654';
+  const BINANCE_UID = '533493959';
   const BSC_WALLET_ADDRESS = '0xacb7d515bfe4812805dad5f28ba742a38a36c015';
   const WEBHOOK_URL = 'https://cryptocindy.app.n8n.cloud/webhook/order-created';
   const INVENTORY_URL = 'https://docs.google.com/spreadsheets/d/1-UShfw3ta6F1ANFK6IG1-PEGrKyyGda6H-kQ4CVxgSo/gviz/tq?tqx=out:json&gid=0';
