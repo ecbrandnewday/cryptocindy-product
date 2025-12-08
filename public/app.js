@@ -15,8 +15,8 @@
   const WEBHOOK_URL = 'https://cryptocindyrabbit.app.n8n.cloud/webhook/order';
   const INVENTORY_URL = 'https://docs.google.com/spreadsheets/d/1-UShfw3ta6F1ANFK6IG1-PEGrKyyGda6H-kQ4CVxgSo/gviz/tq?tqx=out:json&gid=0';
   const SALE_LIMITS = {
-    plush: 80,
-    keychain: 150,
+    plush: 85,
+    keychain: 135,
   };
 
   const form = document.getElementById('orderForm');
