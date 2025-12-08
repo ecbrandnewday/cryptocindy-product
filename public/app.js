@@ -633,49 +633,42 @@
   }
 
   function updatePaymentHint(total) {
-    if (!Number.isFinite(total) || total <= 0) {
-      paymentHint.textContent = '';
-      return;
-    }
-    const formatted = formatAmount(total);
+    const hasTotal = Number.isFinite(total) && total > 0;
+    const formatted = hasTotal ? formatAmount(total) : null;
+    const method = paymentSelect.value;
     paymentHint.textContent = '';
 
-    if (paymentSelect.value === '幣安交易所') {
+    const renderHint = (prefixText, codeValue, copyLabel) => {
       const emphasis = document.createElement('strong');
       emphasis.className = 'payment-hint__emphasis';
 
-      const prefix = document.createTextNode(`請打款 ${formatted} USDT 到 幣安 UID： `);
+      const prefix = document.createTextNode(prefixText);
       const wrapper = document.createElement('span');
       wrapper.className = 'payment-hint__address';
 
       const code = document.createElement('code');
       code.className = 'hint-code';
-      code.textContent = BINANCE_UID;
+      code.textContent = codeValue;
 
-      const copyBtn = createCopyButton(BINANCE_UID, '複製幣安 UID');
-
-      wrapper.append(code, copyBtn);
-      emphasis.append(prefix, wrapper);
-      paymentHint.appendChild(emphasis);
-    } else if (paymentSelect.value === 'BSC') {
-      const emphasis = document.createElement('strong');
-      emphasis.className = 'payment-hint__emphasis';
-
-      const prefix = document.createTextNode(`請打款 ${formatted} USDT 到 BSC 地址： `);
-      const wrapper = document.createElement('span');
-      wrapper.className = 'payment-hint__address';
-
-      const code = document.createElement('code');
-      code.className = 'hint-code';
-      code.textContent = BSC_WALLET_ADDRESS;
-
-      const copyBtn = createCopyButton(BSC_WALLET_ADDRESS, '複製 BSC 地址');
+      const copyBtn = createCopyButton(codeValue, copyLabel);
 
       wrapper.append(code, copyBtn);
       emphasis.append(prefix, wrapper);
       paymentHint.appendChild(emphasis);
+    };
+
+    if (method === '幣安交易所') {
+      const prefixText = hasTotal
+        ? `請打款 ${formatted} USDT 到 幣安 UID： `
+        : '請選擇商品後會顯示需打款金額，請打款到 幣安 UID： ';
+      renderHint(prefixText, BINANCE_UID, '複製幣安 UID');
+    } else if (method === 'BSC') {
+      const prefixText = hasTotal
+        ? `請打款 ${formatted} USDT 到 BSC 地址： `
+        : '請選擇商品後會顯示需打款金額，請打款到 BSC 地址： ';
+      renderHint(prefixText, BSC_WALLET_ADDRESS, '複製 BSC 地址');
     } else {
-      paymentHint.textContent = '';
+      paymentHint.textContent = '請選擇付款方式';
     }
   }
 
