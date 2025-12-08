@@ -3,11 +3,11 @@
   const MAX_PER_ITEM = 2;
   const PRODUCTS = {
     plush: { id: 'plush', name: '比特兔娃娃', price: 25 },
-    keychain: { id: 'keychain', name: '比特兔鑰匙圈', price: 10 },
+    keychain: { id: 'keychain', name: '比特兔鑰匙圈', price: 100 },
   };
   const BINANCE_UID = '533493959';
   const BSC_WALLET_ADDRESS = '0xf64251593fd34e292435dad80bcb620fa564963f';
-  const WEBHOOK_URL = 'https://cryptocindy.app.n8n.cloud/webhook/order-created';
+  const WEBHOOK_URL = 'https://cryptocindyrabbit.app.n8n.cloud/webhook/order';
   const INVENTORY_URL = 'https://docs.google.com/spreadsheets/d/1-UShfw3ta6F1ANFK6IG1-PEGrKyyGda6H-kQ4CVxgSo/gviz/tq?tqx=out:json&gid=0';
   const SALE_LIMITS = {
     plush: 80,
