@@ -3,7 +3,7 @@
   const MAX_PER_ITEM = 2;
   const PRODUCTS = {
     plush: { id: 'plush', name: '比特兔娃娃', price: 25 },
-    keychain: { id: 'keychain', name: '比特兔鑰匙圈', price: 100 },
+    keychain: { id: 'keychain', name: '比特兔鑰匙圈', price: 10 },
   };
   const BINANCE_UID = '533493959';
   const BSC_WALLET_ADDRESS = '0xf64251593fd34e292435dad80bcb620fa564963f';
