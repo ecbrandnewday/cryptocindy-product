@@ -153,6 +153,22 @@ main {
   color: var(--dark);
 }
 
+.product__meta {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.product__meta strong {
+  color: var(--dark);
+  font-weight: 700;
+}
+
 .product__actions {
   margin-top: auto;
   display: flex;
