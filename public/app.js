@@ -805,7 +805,6 @@
       totalPrice: summary.total,
       totalQuantity: summary.totalQty,
       customerName: formData.get('customerName')?.trim() || '',
-      nickname: formData.get('nickname')?.trim() || '',
       email: formData.get('email')?.trim() || '',
       phone: formData.get('phone')?.trim() || '',
       store: formData.get('store')?.trim() || '',
@@ -890,13 +889,11 @@
       totalPrice,
       plushQty,
       keychainQty,
-      nickname,
     } = order;
     return {
       id,
       createdAt,
       customerName,
-      nickname,
       email,
       phone,
       store,
