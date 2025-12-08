@@ -314,18 +314,6 @@ main {
   cursor: default;
 }
 
-.field__hint {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--muted);
-}
-
-.field__hint a {
-  color: var(--primary);
-  text-decoration: underline;
-  font-weight: 700;
-}
-
 .payment-extra {
   display: none;
 }
