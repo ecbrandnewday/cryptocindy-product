@@ -16,7 +16,7 @@
   const INVENTORY_URL = 'https://docs.google.com/spreadsheets/d/1-UShfw3ta6F1ANFK6IG1-PEGrKyyGda6H-kQ4CVxgSo/gviz/tq?tqx=out:json&gid=0';
   const SALE_LIMITS = {
     plush: 85,
-    keychain: 135,
+    keychain: 130,
   };
 
   const form = document.getElementById('orderForm');
