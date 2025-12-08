@@ -1,6 +1,11 @@
 (() => {
   const storageKey = 'rabbitSaleOrders';
-  const MAX_PER_ITEM = 2;
+  const DEFAULT_MAX_PER_ITEM = 2;
+  const REDUCED_MAX_PER_ITEM = 1;
+  const LIMIT_REDUCTION_THRESHOLDS = {
+    plush: 60,
+    keychain: 120,
+  };
   const PRODUCTS = {
     plush: { id: 'plush', name: '比特兔娃娃', price: 25 },
     keychain: { id: 'keychain', name: '比特兔鑰匙圈', price: 10 },
@@ -41,9 +46,17 @@
       plush: false,
       keychain: false,
     },
+    maxPerItem: {
+      plush: DEFAULT_MAX_PER_ITEM,
+      keychain: DEFAULT_MAX_PER_ITEM,
+    },
   };
 
   let pendingOrderData = null;
+
+  function getMaxPerItem(productId) {
+    return state.maxPerItem?.[productId] ?? DEFAULT_MAX_PER_ITEM;
+  }
 
   function formatPhone(phone) {
     const digits = phone.replace(/\D/g, '').slice(0, 10);
@@ -328,6 +341,16 @@
     return { plushTotal, keychainTotal };
   }
 
+  function setMaxPerItemFromTotals(totals) {
+    const nextPlushMax =
+      totals.plushTotal >= LIMIT_REDUCTION_THRESHOLDS.plush ? REDUCED_MAX_PER_ITEM : DEFAULT_MAX_PER_ITEM;
+    const nextKeychainMax =
+      totals.keychainTotal >= LIMIT_REDUCTION_THRESHOLDS.keychain ? REDUCED_MAX_PER_ITEM : DEFAULT_MAX_PER_ITEM;
+
+    state.maxPerItem.plush = nextPlushMax;
+    state.maxPerItem.keychain = nextKeychainMax;
+  }
+
   function ensureSoldOutNotice(card) {
     let notice = card.querySelector('.product__soldout');
     if (!notice) {
@@ -367,13 +390,34 @@
     return cartChanged;
   }
 
+  function enforceCartLimits() {
+    let cartChanged = false;
+    Object.entries(state.cart).forEach(([productId, quantity]) => {
+      if (!PRODUCTS[productId]) {
+        return;
+      }
+      const maxQuantity = getMaxPerItem(productId);
+      if (quantity > maxQuantity) {
+        if (maxQuantity <= 0) {
+          delete state.cart[productId];
+        } else {
+          state.cart[productId] = maxQuantity;
+        }
+        cartChanged = true;
+      }
+    });
+    return cartChanged;
+  }
+
   async function loadSaleStatus() {
     try {
       const totals = await fetchInventoryTotals();
       state.soldOut.plush = totals.plushTotal >= SALE_LIMITS.plush;
       state.soldOut.keychain = totals.keychainTotal >= SALE_LIMITS.keychain;
       const cartChanged = applySoldOutState();
-      if (cartChanged) {
+      setMaxPerItemFromTotals(totals);
+      const cartAdjustedByLimit = enforceCartLimits();
+      if (cartChanged || cartAdjustedByLimit) {
         recalc();
       } else {
         updateProductControls();
@@ -640,6 +684,7 @@
       const productId = card.dataset.productId;
       const quantity = state.cart[productId] || 0;
       const soldOut = isProductSoldOut(productId);
+      const maxPerItem = getMaxPerItem(productId);
       const qtyEl = card.querySelector('[data-role="quantity"]');
       const decreaseBtn = card.querySelector('[data-action="decrease"]');
       const increaseBtn = card.querySelector('[data-action="increase"]');
@@ -653,7 +698,7 @@
         decreaseBtn.setAttribute('aria-disabled', String(disabled));
       }
       if (increaseBtn) {
-        const disabled = soldOut || quantity >= MAX_PER_ITEM;
+        const disabled = soldOut || quantity >= maxPerItem;
         increaseBtn.disabled = disabled;
         increaseBtn.setAttribute('aria-disabled', String(disabled));
       }
@@ -708,11 +753,12 @@
       alert(`${productName}已售完，暫時無法下單。`);
       return;
     }
+    const maxPerItem = getMaxPerItem(productId);
     const current = state.cart[productId] || 0;
 
     if (delta > 0) {
-      if (current >= MAX_PER_ITEM) {
-        alert(`每樣商品最多 ${MAX_PER_ITEM} 件，請調整後再新增。`);
+      if (current >= maxPerItem) {
+        alert(`每樣商品最多 ${maxPerItem} 件，請調整後再新增。`);
         return;
       }
       state.cart[productId] = current + 1;
@@ -775,9 +821,13 @@
     if (!data.items.length) {
       errors.push('請先選擇商品');
     }
-    const overLimit = data.items.find((item) => item.quantity > MAX_PER_ITEM);
+    const overLimit = data.items.find((item) => {
+      const maxAllowed = getMaxPerItem(item.id);
+      return item.quantity > maxAllowed;
+    });
     if (overLimit) {
-      errors.push(`「${overLimit.name}」最多只能購買 ${MAX_PER_ITEM} 件`);
+      const maxAllowed = getMaxPerItem(overLimit.id);
+      errors.push(`「${overLimit.name}」最多只能購買 ${maxAllowed} 件`);
     }
     if (!data.customerName) {
       errors.push('請輸入姓名');
