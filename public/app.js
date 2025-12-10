@@ -1,6 +1,6 @@
 (() => {
   const storageKey = 'rabbitSaleOrders';
-  const DEFAULT_MAX_PER_ITEM = 2;
+  const DEFAULT_MAX_PER_ITEM = 10;
   const REDUCED_MAX_PER_ITEM = 1;
   const LIMIT_REDUCTION_THRESHOLDS = {
     plush: 60,
